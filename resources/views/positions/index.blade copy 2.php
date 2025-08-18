@@ -27,10 +27,9 @@
         }
 
         /* Sidebar Styles */
-        .sidebar {
+        /* .sidebar {
             width: 280px;
-            /* background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%); */
-            background: linear-gradient(180deg, #2d3748 0%, #1a202c 100%);
+            background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
             color: white;
             transition: all 0.3s ease;
             position: fixed;
@@ -39,9 +38,9 @@
             top: 0;
             z-index: 1000;
             overflow-y: auto;
-        }
+        } */
 
-        /* .sidebar {
+        .sidebar {
             width: 280px;
             background: linear-gradient(180deg, #2d3748 0%, #1a202c 100%);
             color: white;
@@ -51,7 +50,7 @@
             transition: all 0.3s ease;
             z-index: 1000;
             border-right: 1px solid #4a5568;
-        } */
+        }
 
         .sidebar.collapsed {
             width: 70px;
