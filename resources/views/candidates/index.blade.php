@@ -825,7 +825,6 @@
 </head>
 <body>
     <div class="dashboard-container">
-        <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
@@ -835,15 +834,6 @@
             </div>
 
             <div class="user-info">
-                <!-- <div class="user-avatar">
-                    @if(Auth::user()->role == 'admin')
-                        <i class="fas fa-user-crown"></i>
-                    @elseif(Auth::user()->role == 'hr')
-                        <i class="fas fa-user-tie"></i>
-                    @else
-                        <i class="fas fa-user"></i>
-                    @endif
-                </div> -->
                 <div class="user-details">
                     <div class="user-name">{{ Auth::user()->full_name }}</div>
                     <div class="user-role">{{ ucfirst(Auth::user()->role) }}</div>
@@ -851,20 +841,6 @@
             </div>
 
             <nav class="nav-menu">
-                <!-- <div class="nav-item">
-                    <a href="{{ route('dashboard') }}" class="nav-link">
-                        <i class="fas fa-tachometer-alt"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </div>
-                @if(in_array(Auth::user()->role, ['admin']))
-                    <div class="nav-item">
-                        <a href="{{ route('admin.users') }}" class="nav-link">
-                            <i class="fas fa-users"></i>
-                            <span>User Management</span>
-                        </a>
-                    </div>
-                @endif -->
                 @if(in_array(Auth::user()->role, ['admin', 'hr']))
                     <div class="nav-item">
                         <a href="{{ route('candidates.index') }}" class="nav-link active">
@@ -882,7 +858,6 @@
             </nav>
         </aside>
 
-        <!-- Main Content -->
         <main class="main-content" id="mainContent">
             <header class="header">
                 <div class="header-left">
@@ -908,7 +883,6 @@
             </header>
 
             <div class="content">
-                <!-- Filter Section -->
                 <div class="filter-section">
                     <form id="filterForm">
                         <div class="filter-row">
@@ -918,7 +892,6 @@
                                        placeholder="Cari berdasarkan nama, email, atau kode kandidat..."
                                        value="{{ request('search') }}">
                             </div>
-                            
                             <div class="filter-group">
                                 <label class="filter-label">Status</label>
                                 <select class="filter-select" id="statusFilter">
@@ -931,7 +904,6 @@
                                     @endforeach
                                 </select>
                             </div>
-                            
                             <div class="filter-group">
                                 <label class="filter-label">Posisi</label>
                                 <select class="filter-select" id="positionFilter">
@@ -944,8 +916,6 @@
                                     @endforeach
                                 </select>
                             </div>
-
-                            <!-- ✅ NEW: Test Status Filter -->
                             <div class="filter-group">
                                 <label class="filter-label">Status Test</label>
                                 <select class="filter-select" id="testStatusFilter">
@@ -964,8 +934,6 @@
                                     </option>
                                 </select>
                             </div>
-
-                            <!-- ✅ NEW: Kraeplin Category Filter -->
                             <div class="filter-group">
                                 <label class="filter-label">Kategori Kraeplin</label>
                                 <select class="filter-select" id="kraeplinCategoryFilter">
@@ -978,8 +946,6 @@
                                     @endforeach
                                 </select>
                             </div>
-
-                            <!-- ✅ NEW: DISC Type Filter -->
                             <div class="filter-group">
                                 <label class="filter-label">Tipe DISC</label>
                                 <select class="filter-select" id="discTypeFilter">
@@ -1014,7 +980,6 @@
                     </div>
                 </div>
 
-                <!-- Candidates Table -->
                 <div class="table-container">
                     <div class="loading-overlay" id="loadingOverlay">
                         <div class="loading-spinner"></div>
@@ -1038,7 +1003,6 @@
                                 <th width="8%">Status</th>
                                 <th width="10%">Tanggal Apply</th>
                                 <th width="10%">Gaji Harapan</th>
-                                <!-- ✅ NEW: Test Result Columns -->
                                 <th width="10%">Skor Kraeplin</th>
                                 <th width="8%">Tipe DISC</th>
                                 <th width="7%">Aksi</th>
@@ -1094,7 +1058,6 @@
                                         <span style="color: #718096;">Tidak disebutkan</span>
                                     @endif
                                 </td>
-                                <!-- ✅ FIXED: Kraeplin Score Column using correct property name -->
                                 <td>
                                     @if($candidate->kraeplinTestResult)
                                         <div class="test-score">
@@ -1109,7 +1072,6 @@
                                         <span class="test-not-taken">Belum test</span>
                                     @endif
                                 </td>
-                                <!-- ✅ NEW: DISC Type Column -->
                                 <td>
                                     @if($candidate->disc3DResult && $candidate->disc3DResult->primary_type)
                                         <div class="test-score">
@@ -1140,7 +1102,6 @@
                                                 <i class="fas fa-edit"></i>
                                                 Edit
                                             </a>
-                                            <!-- ✅ NEW: Test Result Links -->
                                             @if($candidate->kraeplinTestResult)
                                                 <a href="{{ route('candidates.show', $candidate->id) }}#kraeplin-section" class="dropdown-item">
                                                     <i class="fas fa-chart-line"></i>
@@ -1176,40 +1137,103 @@
                         </tbody>
                     </table>
                     
-                    <!-- Pagination -->
                     <div class="pagination">
                         <div class="pagination-info">
-                            Menampilkan {{ $candidates->firstItem() ?? 0 }} - {{ $candidates->lastItem() ?? 0 }} 
-                            dari {{ $candidates->total() }} kandidat
+                            <div class="pagination-summary">
+                                <span class="info-highlight">{{ $candidates->firstItem() ?? 0 }} - {{ $candidates->lastItem() ?? 0 }}</span>
+                                dari <span class="info-total">{{ $candidates->total() }}</span> kandidat
+                            </div>
+                            <div class="pagination-meta">
+                                <i class="fas fa-file-alt"></i>
+                                Halaman {{ $candidates->currentPage() }} dari {{ $candidates->lastPage() }}
+                            </div>
                         </div>
+                        
                         <div class="pagination-controls">
-                            @if($candidates->previousPageUrl())
-                                <a href="{{ $candidates->appends(request()->query())->previousPageUrl() }}" class="page-btn">
-                                    <i class="fas fa-chevron-left"></i>
-                                </a>
-                            @else
-                                <button class="page-btn" disabled>
-                                    <i class="fas fa-chevron-left"></i>
-                                </button>
-                            @endif
-                            
-                            @foreach($candidates->appends(request()->query())->getUrlRange(1, $candidates->lastPage()) as $page => $url)
-                                @if($page == $candidates->currentPage())
-                                    <button class="page-btn active">{{ $page }}</button>
+                            <div class="pagination-nav">
+                                @if($candidates->currentPage() > 1)
+                                    <a href="{{ $candidates->appends(request()->query())->url(1) }}" class="page-btn nav-btn" title="Halaman Pertama">
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </a>
                                 @else
-                                    <a href="{{ $url }}" class="page-btn">{{ $page }}</a>
+                                    <button class="page-btn nav-btn" disabled title="Halaman Pertama">
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </button>
                                 @endif
-                            @endforeach
-                            
-                            @if($candidates->nextPageUrl())
-                                <a href="{{ $candidates->appends(request()->query())->nextPageUrl() }}" class="page-btn">
-                                    <i class="fas fa-chevron-right"></i>
-                                </a>
-                            @else
-                                <button class="page-btn" disabled>
-                                    <i class="fas fa-chevron-right"></i>
-                                </button>
-                            @endif
+
+                                @if($candidates->previousPageUrl())
+                                    <a href="{{ $candidates->appends(request()->query())->previousPageUrl() }}" class="page-btn nav-btn" title="Halaman Sebelumnya">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                @else
+                                    <button class="page-btn nav-btn" disabled title="Halaman Sebelumnya">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                @endif
+                                
+                                @php
+                                    $start = max(1, $candidates->currentPage() - 2);
+                                    $end = min($candidates->lastPage(), $candidates->currentPage() + 2);
+                                    
+                                    if ($candidates->currentPage() <= 3) {
+                                        $end = min($candidates->lastPage(), 5);
+                                    }
+                                    if ($candidates->currentPage() > $candidates->lastPage() - 3) {
+                                        $start = max(1, $candidates->lastPage() - 4);
+                                    }
+                                @endphp
+
+                                @if($start > 1)
+                                    <a href="{{ $candidates->appends(request()->query())->url(1) }}" class="page-btn">1</a>
+                                    @if($start > 2)
+                                        <span class="pagination-ellipsis">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </span>
+                                    @endif
+                                @endif
+
+                                @for($page = $start; $page <= $end; $page++)
+                                    @if($page == $candidates->currentPage())
+                                        <button class="page-btn active">
+                                            <span class="page-number">{{ $page }}</span>
+                                            <div class="active-indicator"></div>
+                                        </button>
+                                    @else
+                                        <a href="{{ $candidates->appends(request()->query())->url($page) }}" class="page-btn">
+                                            <span class="page-number">{{ $page }}</span>
+                                        </a>
+                                    @endif
+                                @endfor
+
+                                @if($end < $candidates->lastPage())
+                                    @if($end < $candidates->lastPage() - 1)
+                                        <span class="pagination-ellipsis">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </span>
+                                    @endif
+                                    <a href="{{ $candidates->appends(request()->query())->url($candidates->lastPage()) }}" class="page-btn">{{ $candidates->lastPage() }}</a>
+                                @endif
+
+                                @if($candidates->nextPageUrl())
+                                    <a href="{{ $candidates->appends(request()->query())->nextPageUrl() }}" class="page-btn nav-btn" title="Halaman Selanjutnya">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                @else
+                                    <button class="page-btn nav-btn" disabled title="Halaman Selanjutnya">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                @endif
+
+                                @if($candidates->currentPage() < $candidates->lastPage())
+                                    <a href="{{ $candidates->appends(request()->query())->url($candidates->lastPage()) }}" class="page-btn nav-btn" title="Halaman Terakhir">
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </a>
+                                @else
+                                    <button class="page-btn nav-btn" disabled title="Halaman Terakhir">
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </button>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
