@@ -10,41 +10,7 @@
 </head>
 <body>
     <div class="dashboard-container">
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <i class="fas fa-building"></i>
-                    <span class="logo-text">HR System</span>
-                </div>
-            </div>
-
-            <div class="user-info">
-                <div class="user-avatar">
-                    {{ substr(Auth::user()->full_name, 0, 2) }}
-                </div>
-                <div class="user-details">
-                    <div class="user-name">{{ Auth::user()->full_name }}</div>
-                    <div class="user-role">{{ ucfirst(Auth::user()->role) }}</div>
-                </div>
-            </div>
-
-            <nav class="nav-menu">
-                @if(in_array(Auth::user()->role, ['admin', 'hr']))
-                    <div class="nav-item">
-                        <a href="{{ route('candidates.index') }}" class="nav-link active">
-                            <i class="fas fa-user-tie"></i>
-                            <span>Kandidat</span>
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a href="{{ route('positions.index') }}" class="nav-link">
-                            <i class="fas fa-briefcase"></i>
-                            <span>Posisi</span>
-                        </a>
-                    </div>
-                @endif
-            </nav>
-        </aside>
+        @include('sidebar.sidebar')
 
         <div class="mobile-overlay" id="mobileOverlay"></div>
 
