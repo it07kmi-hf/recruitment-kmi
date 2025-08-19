@@ -9,48 +9,19 @@
     <link href="{{ asset('css/positions-index.css') }}" rel="stylesheet">
 </head>
 <body>
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <div class="dashboard-container">
         <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <i class="fas fa-building"></i>
-                    <span class="logo-text">HR System</span>
-                </div>
-            </div>
-
-            <div class="user-info">
-                <div class="user-details">
-                    <div class="user-name">{{ Auth::user()->full_name }}</div>
-                    <div class="user-role">{{ ucfirst(Auth::user()->role) }}</div>
-                </div>
-            </div>
-
-            <nav class="nav-menu">
-                @if(in_array(Auth::user()->role, ['admin', 'hr']))
-                    <div class="nav-item">
-                        <a href="{{ route('candidates.index') }}" class="nav-link">
-                            <i class="fas fa-user-tie"></i>
-                            <span>Kandidat</span>
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a href="{{ route('positions.index') }}" class="nav-link active">
-                            <i class="fas fa-briefcase"></i>
-                            <span>Posisi</span>
-                        </a>
-                    </div>
-                @endif
-            </nav>
-        </aside>
-
+        @include('sidebar.sidebar')
         <main class="main-content" id="mainContent">
             <header class="header">
                 <div class="header-left">
                     <button class="sidebar-toggle" id="sidebarToggle">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <div>
+                    <div class="header-info">
                         <div class="breadcrumb">
                             <a href="{{ route('dashboard') }}">Dashboard</a>
                             <span>/</span>
@@ -62,11 +33,11 @@
                 <div class="header-right">
                     <a href="{{ route('positions.create') }}" class="btn btn-primary">
                         <i class="fas fa-plus"></i>
-                        Tambah Posisi
+                        <span class="btn-text">Tambah Posisi</span>
                     </a>
                     <a href="{{ route('positions.trashed') }}" class="btn btn-secondary">
                         <i class="fas fa-trash"></i>
-                        Posisi Terhapus
+                        <span class="btn-text">Posisi Terhapus</span>
                     </a>
                 </div>
             </header>
@@ -124,7 +95,7 @@
                             <div class="filter-group">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-filter"></i>
-                                    Filter
+                                    <span class="btn-text">Filter</span>
                                 </button>
                             </div>
                         </div>
@@ -137,94 +108,164 @@
                         <h3 class="table-title">Daftar Posisi</h3>
                         <span class="table-info">Total: {{ $positions->total() }} posisi</span>
                     </div>
-                    <table class="positions-table">
-                        <thead>
-                            <tr>
-                                <th width="5%">No</th>
-                                <th width="25%">Posisi</th>
-                                <th width="15%">Tipe & Gaji</th>
-                                <th width="15%">Aplikasi</th>
-                                <th width="10%">Status</th>
-                                <th width="15%">Tanggal</th>
-                                <th width="10%">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($positions as $index => $position)
-                            <tr>
-                                <td>{{ $positions->firstItem() + $index }}</td>
-                                <td>
-                                    <div class="position-info">
-                                        <div class="position-name">{{ $position->position_name }}</div>
-                                        <div class="position-department">{{ $position->department }}</div>
-                                        @if($position->location)
-                                            <div class="position-location">
-                                                <i class="fas fa-map-marker-alt"></i> {{ $position->location }}
-                                            </div>
-                                        @endif
-                                    </div>
-                                </td>
-                                <td>
-                                    <div style="margin-bottom: 8px;">
-                                        <span class="employment-badge employment-{{ str_replace('-', '-', $position->employment_type) }}">
-                                            {{ $position->employment_type_label }}
-                                        </span>
-                                    </div>
-                                    <div style="font-size: 0.85rem; color: #6b7280;">
-                                        {{ $position->salary_range }}
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="application-stats">
-                                        <div class="stat-item">
-                                            <span class="stat-label">
-                                                <i class="fas fa-users"></i>
-                                                Total:
-                                            </span>
-                                            <span class="stat-value {{ $position->total_applications_count == 0 ? 'zero' : '' }}">
-                                                {{ $position->total_applications_count }}
+                    
+                    <!-- Desktop Table -->
+                    <div class="desktop-table">
+                        <table class="positions-table">
+                            <thead>
+                                <tr>
+                                    <th width="5%">No</th>
+                                    <th width="25%">Posisi</th>
+                                    <th width="15%">Tipe & Gaji</th>
+                                    <th width="15%">Aplikasi</th>
+                                    <th width="10%">Status</th>
+                                    <th width="15%">Tanggal</th>
+                                    <th width="10%">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($positions as $index => $position)
+                                <tr>
+                                    <td>{{ $positions->firstItem() + $index }}</td>
+                                    <td>
+                                        <div class="position-info">
+                                            <div class="position-name">{{ $position->position_name }}</div>
+                                            <div class="position-department">{{ $position->department }}</div>
+                                            @if($position->location)
+                                                <div class="position-location">
+                                                    <i class="fas fa-map-marker-alt"></i> {{ $position->location }}
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style="margin-bottom: 8px;">
+                                            <span class="employment-badge employment-{{ str_replace('-', '-', $position->employment_type) }}">
+                                                {{ $position->employment_type_label }}
                                             </span>
                                         </div>
-                                        <div class="stat-item">
-                                            <span class="stat-label">
-                                                <i class="fas fa-clock"></i>
-                                                Proses:
-                                            </span>
-                                            <span class="stat-value {{ $position->active_applications_count == 0 ? 'zero' : ($position->active_applications_count > 0 ? 'warning' : 'active') }}">
-                                                {{ $position->active_applications_count }}
-                                            </span>
+                                        <div style="font-size: 0.85rem; color: #6b7280;">
+                                            {{ $position->salary_range }}
                                         </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    @if($position->detailed_status === 'aktif')
-                                        <span class="status-badge status-active">
-                                            <i class="fas fa-check-circle"></i> Aktif
-                                        </span>
-                                    @else
-                                        <span class="status-badge status-closed">
-                                            <i class="fas fa-times-circle"></i> Tutup
-                                        </span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <div style="font-size: 0.85rem;">
-                                        @if($position->posted_date)
-                                            <div style="color: #6b7280; margin-bottom: 4px;">
-                                                Posted: {{ $position->posted_date->format('d M Y') }}
+                                    </td>
+                                    <td>
+                                        <div class="application-stats">
+                                            <div class="stat-item">
+                                                <span class="stat-label">
+                                                    <i class="fas fa-users"></i>
+                                                    Total:
+                                                </span>
+                                                <span class="stat-value {{ $position->total_applications_count == 0 ? 'zero' : '' }}">
+                                                    {{ $position->total_applications_count }}
+                                                </span>
                                             </div>
+                                            <div class="stat-item">
+                                                <span class="stat-label">
+                                                    <i class="fas fa-clock"></i>
+                                                    Proses:
+                                                </span>
+                                                <span class="stat-value {{ $position->active_applications_count == 0 ? 'zero' : ($position->active_applications_count > 0 ? 'warning' : 'active') }}">
+                                                    {{ $position->active_applications_count }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if($position->detailed_status === 'aktif')
+                                            <span class="status-badge status-active">
+                                                <i class="fas fa-check-circle"></i> Aktif
+                                            </span>
+                                        @else
+                                            <span class="status-badge status-closed">
+                                                <i class="fas fa-times-circle"></i> Tutup
+                                            </span>
                                         @endif
-                                        @if($position->closing_date)
-                                            <div style="color: {{ $position->closing_date->isPast() ? '#dc2626' : '#f59e0b' }};">
-                                                Tutup: {{ $position->closing_date->format('d M Y') }}
-                                                @if($position->closing_date->isPast())
-                                                    <span style="font-size: 0.7rem;">(Lewat)</span>
+                                    </td>
+                                    <td>
+                                        <div style="font-size: 0.85rem;">
+                                            @if($position->posted_date)
+                                                <div style="color: #6b7280; margin-bottom: 4px;">
+                                                    Posted: {{ $position->posted_date->format('d M Y') }}
+                                                </div>
+                                            @endif
+                                            @if($position->closing_date)
+                                                <div style="color: {{ $position->closing_date->isPast() ? '#dc2626' : '#f59e0b' }};">
+                                                    Tutup: {{ $position->closing_date->format('d M Y') }}
+                                                    @if($position->closing_date->isPast())
+                                                        <span style="font-size: 0.7rem;">(Lewat)</span>
+                                                    @endif
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="action-dropdown">
+                                            <button class="action-btn" onclick="toggleDropdown(this)">
+                                                <i class="fas fa-ellipsis-v"></i>
+                                            </button>
+                                            <div class="dropdown-menu">
+                                                <a href="{{ route('positions.edit', $position->id) }}" class="dropdown-item">
+                                                    <i class="fas fa-edit"></i>
+                                                    Edit
+                                                </a>
+                                                <div class="dropdown-divider"></div>
+                                           
+                                                @if($position->detailed_status === 'aktif')
+                                                    <button class="dropdown-item" 
+                                                            onclick="togglePositionStatus({{ $position->id }}, '{{ addslashes($position->position_name) }}', 'close', {{ $position->active_applications_count }}, {{ $position->total_applications_count }})">
+                                                        <i class="fas fa-ban"></i>
+                                                        Tutup Posisi
+                                                    </button>
+                                                @else
+                                                    <button class="dropdown-item" 
+                                                            onclick="togglePositionStatus({{ $position->id }}, '{{ addslashes($position->position_name) }}', 'open', {{ $position->active_applications_count }}, {{ $position->total_applications_count }})">
+                                                        <i class="fas fa-check"></i>
+                                                        Buka Posisi
+                                                    </button>
                                                 @endif
+                                                <div class="dropdown-divider"></div>
+                                                <button type="button" 
+                                                        class="btn btn-outline-danger btn-sm btn-delete-position dropdown-item" 
+                                                        data-position-id="{{ $position->id }}"
+                                                        data-position-name="{{ $position->position_name }}"
+                                                        onclick="deletePosition({{ $position->id }}, '{{ addslashes($position->position_name) }}', {{ $position->total_applications_count }}, {{ $position->active_applications_count }})"
+                                                        title="Hapus Posisi">
+                                                    <i class="fas fa-trash-alt"></i> Hapus
+                                                </button>
                                             </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="7" class="empty-state">
+                                        <i class="fas fa-briefcase"></i>
+                                        <p>Tidak ada posisi yang tersedia</p>
+                                        @if(request()->hasAny(['search', 'department', 'status', 'employment_type']))
+                                            <small>Coba ubah filter pencarian Anda</small>
                                         @endif
-                                    </div>
-                                </td>
-                                <td>
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Mobile Cards -->
+                    <div class="mobile-cards">
+                        @forelse($positions as $index => $position)
+                        <div class="position-card">
+                            <div class="card-header">
+                                <div class="position-info">
+                                    <div class="position-name">{{ $position->position_name }}</div>
+                                    <div class="position-department">{{ $position->department }}</div>
+                                    @if($position->location)
+                                        <div class="position-location">
+                                            <i class="fas fa-map-marker-alt"></i> {{ $position->location }}
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="card-actions">
                                     <div class="action-dropdown">
                                         <button class="action-btn" onclick="toggleDropdown(this)">
                                             <i class="fas fa-ellipsis-v"></i>
@@ -260,21 +301,97 @@
                                             </button>
                                         </div>
                                     </div>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="7" class="empty-state">
-                                    <i class="fas fa-briefcase"></i>
-                                    <p>Tidak ada posisi yang tersedia</p>
-                                    @if(request()->hasAny(['search', 'department', 'status', 'employment_type']))
-                                        <small>Coba ubah filter pencarian Anda</small>
-                                    @endif
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                                </div>
+                            </div>
+                            
+                            <div class="card-content">
+                                <div class="card-row">
+                                    <div class="card-label">
+                                        <i class="fas fa-briefcase"></i>
+                                        Tipe
+                                    </div>
+                                    <div class="card-value">
+                                        <span class="employment-badge employment-{{ str_replace('-', '-', $position->employment_type) }}">
+                                            {{ $position->employment_type_label }}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-row">
+                                    <div class="card-label">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                        Gaji
+                                    </div>
+                                    <div class="card-value">{{ $position->salary_range }}</div>
+                                </div>
+                                
+                                <div class="card-row">
+                                    <div class="card-label">
+                                        <i class="fas fa-users"></i>
+                                        Aplikasi
+                                    </div>
+                                    <div class="card-value">
+                                        <span class="stat-value {{ $position->total_applications_count == 0 ? 'zero' : '' }}">
+                                            {{ $position->total_applications_count }}
+                                        </span>
+                                        <small>({{ $position->active_applications_count }} aktif)</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-row">
+                                    <div class="card-label">
+                                        <i class="fas fa-info-circle"></i>
+                                        Status
+                                    </div>
+                                    <div class="card-value">
+                                        @if($position->detailed_status === 'aktif')
+                                            <span class="status-badge status-active">
+                                                <i class="fas fa-check-circle"></i> Aktif
+                                            </span>
+                                        @else
+                                            <span class="status-badge status-closed">
+                                                <i class="fas fa-times-circle"></i> Tutup
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                                
+                                @if($position->posted_date || $position->closing_date)
+                                <div class="card-row">
+                                    <div class="card-label">
+                                        <i class="fas fa-calendar"></i>
+                                        Tanggal
+                                    </div>
+                                    <div class="card-value">
+                                        @if($position->posted_date)
+                                            <div style="font-size: 0.8rem; color: #6b7280;">
+                                                Posted: {{ $position->posted_date->format('d M Y') }}
+                                            </div>
+                                        @endif
+                                        @if($position->closing_date)
+                                            <div style="font-size: 0.8rem; color: {{ $position->closing_date->isPast() ? '#dc2626' : '#f59e0b' }};">
+                                                Tutup: {{ $position->closing_date->format('d M Y') }}
+                                                @if($position->closing_date->isPast())
+                                                    <span style="font-size: 0.7rem;">(Lewat)</span>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                        @empty
+                        <div class="empty-state">
+                            <i class="fas fa-briefcase"></i>
+                            <p>Tidak ada posisi yang tersedia</p>
+                            @if(request()->hasAny(['search', 'department', 'status', 'employment_type']))
+                                <small>Coba ubah filter pencarian Anda</small>
+                            @endif
+                        </div>
+                        @endforelse
+                    </div>
+
                     <!-- Enhanced Pagination -->
                     @if ($positions->hasPages())
                     <div class="pagination-container">
@@ -339,8 +456,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="{{ asset('js/positions-index.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="{{ asset('js/position-transfer.js') }}"></script>
+    <script src="{{ asset('js/positions-index.js') }}"></script>
 </body>
 </html>
