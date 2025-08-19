@@ -1,4 +1,4 @@
-/* Form Styles CSS */
+/* Form Styles CSS - Mobile Upload Optimized */
 .form-section {
     background: white;
     border-radius: 12px;
@@ -200,7 +200,110 @@
     margin: 0 auto;
 }
 
-/* Enhanced File Upload Styles */
+/* 🆕 MOBILE-OPTIMIZED: Enhanced File Upload Styles */
+.mobile-file-upload {
+    position: relative;
+    display: block;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.mobile-file-input {
+    width: 100%;
+    min-height: 60px;
+    padding: 16px;
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+    background: #f9fafb;
+    font-size: 16px; /* Prevent iOS zoom */
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    
+    /* Reset default file input styling */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    
+    /* Custom file input styling */
+    background-image: url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3cg%3e%3ccircle cx='50' cy='35' r='25' fill='none' stroke='%236b7280' stroke-width='2'/%3e%3cpath d='M50 20v20M40 30h20' stroke='%236b7280' stroke-width='2'/%3e%3ctext x='50' y='70' text-anchor='middle' font-size='12' fill='%236b7280'%3ePilih file%3c/text%3e%3c/g%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: center 16px;
+    background-size: 40px 40px;
+    padding-top: 64px;
+    text-align: center;
+}
+
+.mobile-file-input:hover {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.mobile-file-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.mobile-file-input.has-file {
+    border-color: #10b981;
+    border-style: solid;
+    background-color: #ecfdf5;
+    background-image: url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3cg%3e%3ccircle cx='50' cy='35' r='25' fill='none' stroke='%2310b981' stroke-width='2'/%3e%3cpath d='M40 35l8 8 16-16' stroke='%2310b981' stroke-width='2' fill='none'/%3e%3ctext x='50' y='70' text-anchor='middle' font-size='12' fill='%2310b981'%3eFile dipilih%3c/text%3e%3c/g%3e%3c/svg%3e");
+    color: #065f46;
+}
+
+.mobile-file-input.error {
+    border-color: #ef4444;
+    background-color: #fef2f2;
+    background-image: url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3cg%3e%3ccircle cx='50' cy='35' r='25' fill='none' stroke='%23ef4444' stroke-width='2'/%3e%3cpath d='M40 40l20-20M40 20l20 20' stroke='%23ef4444' stroke-width='2'/%3e%3ctext x='50' y='70' text-anchor='middle' font-size='12' fill='%23ef4444'%3eFile error%3c/text%3e%3c/g%3e%3c/svg%3e");
+    color: #dc2626;
+}
+
+.file-info {
+    margin-top: 8px;
+    padding: 12px;
+    background-color: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 6px;
+    font-size: 14px;
+    display: none;
+}
+
+.file-info.show {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+.file-error {
+    margin-top: 8px;
+    padding: 12px;
+    background-color: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    font-size: 14px;
+    display: none;
+}
+
+.file-error.show {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Legacy file upload support for backward compatibility */
 .file-upload-wrapper {
     position: relative;
     display: inline-block;
@@ -435,11 +538,40 @@
     font-weight: 500;
 }
 
-/* Responsive adjustments */
+/* Touch target optimization for mobile */
+.btn-primary,
+.btn-secondary,
+.btn-add,
+.btn-remove,
+.mobile-file-input {
+    min-height: 44px; /* Apple's recommended minimum touch target */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent horizontal scroll on mobile */
+body, html {
+    overflow-x: hidden;
+}
+
+/* 🆕 MOBILE: Enhanced responsive design */
 @media (max-width: 768px) {
     .form-section {
         padding: 16px;
         margin-bottom: 16px;
+    }
+    
+    .section-title {
+        font-size: 18px;
+    }
+    
+    .mobile-file-input {
+        min-height: 70px;
+        font-size: 14px;
+        padding: 12px;
+        padding-top: 60px;
+        background-size: 32px 32px;
+        background-position: center 12px;
     }
     
     .btn-copy {
@@ -448,18 +580,133 @@
         margin-top: 4px;
         width: fit-content;
     }
+    
+    .max-w-4xl {
+        max-width: calc(100vw - 16px);
+    }
+    
+    .save-indicator {
+        bottom: 10px;
+        right: 10px;
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+    
+    .custom-alert {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+        padding: 12px 16px;
+    }
 }
 
+/* 🆕 MOBILE: iOS Safari specific optimizations */
+@supports (-webkit-appearance: none) and (not (-moz-appearance: none)) {
+    .mobile-file-input {
+        /* iOS Safari specific styling */
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    
+    .mobile-file-input::-webkit-file-upload-button {
+        display: none;
+    }
+}
+
+/* 🆕 MOBILE: Android Chrome specific optimizations */
+@media screen and (-webkit-min-device-pixel-ratio: 0) and (min-resolution: .001dpcm) {
+    .mobile-file-input {
+        /* Android Chrome specific styling */
+        background-attachment: local;
+    }
+}
+
+/* Duplicate status and validation styles */
 .duplicate-status {
     transition: all 0.3s ease;
 }
+
 .duplicate-status svg {
     flex-shrink: 0;
 }
+
 .checking-duplicate {
     border-color: #f59e0b !important;
     box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1) !important;
 }
+
 .checking-duplicate + .duplicate-status {
     color: #f59e0b;
+}
+
+/* OCR indicator styles */
+.ocr-indicator {
+    margin-top: 4px;
+}
+
+.ocr-filled {
+    background-color: #ecfdf5 !important;
+    border-color: #10b981 !important;
+    color: #065f46 !important;
+}
+
+/* 🆕 MOBILE: High contrast mode support */
+@media (prefers-contrast: high) {
+    .mobile-file-input {
+        border-width: 3px;
+    }
+    
+    .mobile-file-input:focus {
+        border-width: 4px;
+    }
+    
+    .form-input {
+        border-width: 2px;
+    }
+}
+
+/* 🆕 MOBILE: Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .mobile-file-input,
+    .form-input,
+    .btn-primary,
+    .save-indicator {
+        transition: none;
+        animation: none;
+    }
+    
+    .save-indicator.show {
+        animation: none;
+    }
+    
+    .file-info.show,
+    .file-error.show {
+        animation: none;
+    }
+}
+
+/* 🆕 MOBILE: Dark mode support (if implemented) */
+@media (prefers-color-scheme: dark) {
+    .mobile-file-input {
+        background-color: #1f2937;
+        border-color: #374151;
+        color: #d1d5db;
+    }
+    
+    .mobile-file-input:hover {
+        background-color: #111827;
+        border-color: #4b5563;
+    }
+    
+    .file-info {
+        background-color: #1e293b;
+        border-color: #334155;
+        color: #e2e8f0;
+    }
+    
+    .file-error {
+        background-color: #1e1b1b;
+        border-color: #451a1a;
+    }
 }
