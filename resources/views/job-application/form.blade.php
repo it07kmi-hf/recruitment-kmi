@@ -2,14 +2,51 @@
 <html lang="id-ID">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, minimum-scale=1.0, maximum-scale=5.0">
     <meta http-equiv="Content-Language" content="id-ID">
+    <meta name="format-detection" content="telephone=no">
     <title>Form Lamaran Kerja - PT Kayu Mebel Indonesia</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link href="{{ asset('css/form-style.css') }}" rel="stylesheet">
-    <!-- <link href="{{ asset('css/ktp-ocr.css') }}" rel="stylesheet"> -->
-
+    <!-- Optimized for Mobile Performance -->
+    <style>
+        /* Critical CSS for faster mobile loading */
+        .form-input {
+            font-size: 16px !important; /* Prevent zoom on iOS */
+        }
+        
+        /* Mobile file input optimization */
+        input[type="file"] {
+            font-size: 16px;
+        }
+        
+        /* Touch target optimization */
+        .file-upload-label,
+        .btn-primary,
+        .btn-secondary,
+        .btn-add,
+        .btn-remove {
+            min-height: 44px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Prevent horizontal scroll on mobile */
+        body, html {
+            overflow-x: hidden;
+        }
+        
+        .max-w-4xl {
+            max-width: calc(100vw - 32px);
+        }
+        
+        @media (max-width: 768px) {
+            .max-w-4xl {
+                max-width: calc(100vw - 16px);
+            }
+        }
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <div class="max-w-4xl mx-auto py-8 px-4">
@@ -89,20 +126,20 @@
                         <label class="form-label" for="nik">NIK (Nomor Induk Kependudukan) <span class="required-star">*</span></label>
                         <input type="text" name="nik" id="nik" class="form-input" 
                             value="{{ old('nik') }}" maxlength="16" pattern="[0-9]{16}" 
-                            placeholder="Masukkan 16 digit NIK" required>
+                            placeholder="Masukkan 16 digit NIK" required inputmode="numeric">
                         <small class="text-gray-500 text-xs">NIK harus 16 digit angka sesuai KTP</small>
                         <!-- Enhanced OCR Upload Area akan ditambahkan di sini oleh JavaScript -->
                     </div>
                     
                     <div class="form-group">
                         <label class="form-label" for="phone_number">Nomor Telepon <span class="required-star">*</span></label>
-                        <input type="text" name="phone_number" id="phone_number" class="form-input" 
+                        <input type="tel" name="phone_number" id="phone_number" class="form-input" 
                                value="{{ old('phone_number') }}" placeholder="08xxxxxxxxxx" required>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="phone_alternative">Telepon Alternatif <span class="required-star">*</span></label>
-                        <input type="text" name="phone_alternative" id="phone_alternative" class="form-input" 
+                        <input type="tel" name="phone_alternative" id="phone_alternative" class="form-input" 
                                value="{{ old('phone_alternative') }}" placeholder="08xxxxxxxxxx" required>
                     </div>
                     
@@ -665,17 +702,22 @@
                 </div>
             </div>
 
-            <!-- 9. Upload Dokumen & Pernyataan -->
+            <!-- 9. Upload Dokumen & Pernyataan - Mobile Optimized -->
             <div class="form-section" data-section="9">
                 <h2 class="section-title">Upload Dokumen & Pernyataan</h2>
                 <p class="text-sm text-gray-600 mb-4">Format yang diterima: PDF, JPG, PNG (Maksimal 2MB per file)</p>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- CV Upload -->
+                    <!-- CV Upload - Mobile Optimized -->
                     <div class="form-group">
                         <label class="form-label" for="cv">CV/Resume <span class="required-star">*</span></label>
                         <div class="file-upload-wrapper">
-                            <input type="file" name="cv" id="cv" class="file-upload-input" accept=".pdf" required>
+                            <input type="file" 
+                                   name="cv" 
+                                   id="cv" 
+                                   class="file-upload-input" 
+                                   accept=".pdf" 
+                                   required>
                             <label for="cv" class="file-upload-label" id="cv-label">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
@@ -683,15 +725,20 @@
                                 <span>Pilih file PDF</span>
                             </label>
                             <div class="validation-message" id="cv-error"></div>
-                            <div class="file-preview" id="cv-preview" style="display: none;"></div>
+                            <div class="file-preview" id="cv-preview"></div>
                         </div>
                     </div>
                     
-                    <!-- Photo Upload -->
+                    <!-- Photo Upload - Mobile Optimized -->
                     <div class="form-group">
                         <label class="form-label" for="photo">Foto <span class="required-star">*</span></label>
                         <div class="file-upload-wrapper">
-                            <input type="file" name="photo" id="photo" class="file-upload-input" accept=".jpg,.jpeg,.png" required>
+                            <input type="file" 
+                                   name="photo" 
+                                   id="photo" 
+                                   class="file-upload-input" 
+                                   accept=".jpg,.jpeg,.png" 
+                                   required>
                             <label for="photo" class="file-upload-label" id="photo-label">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -699,15 +746,20 @@
                                 <span>Pilih file JPG/PNG</span>
                             </label>
                             <div class="validation-message" id="photo-error"></div>
-                            <div class="file-preview" id="photo-preview" style="display: none;"></div>
+                            <div class="file-preview" id="photo-preview"></div>
                         </div>
                     </div>
                     
-                    <!-- Transcript Upload -->
+                    <!-- Transcript Upload - Mobile Optimized -->
                     <div class="form-group">
                         <label class="form-label" for="transcript">Transkrip Nilai <span class="required-star">*</span></label>
                         <div class="file-upload-wrapper">
-                            <input type="file" name="transcript" id="transcript" class="file-upload-input" accept=".pdf" required>
+                            <input type="file" 
+                                   name="transcript" 
+                                   id="transcript" 
+                                   class="file-upload-input" 
+                                   accept=".pdf" 
+                                   required>
                             <label for="transcript" class="file-upload-label" id="transcript-label">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -715,15 +767,20 @@
                                 <span>Pilih file PDF</span>
                             </label>
                             <div class="validation-message" id="transcript-error"></div>
-                            <div class="file-preview" id="transcript-preview" style="display: none;"></div>
+                            <div class="file-preview" id="transcript-preview"></div>
                         </div>
                     </div>
                     
-                    <!-- Certificates Upload (Multiple) -->
+                    <!-- Certificates Upload (Multiple) - Mobile Optimized -->
                     <div class="form-group">
                         <label class="form-label" for="certificates">Sertifikat (opsional - bisa lebih dari satu)</label>
                         <div class="file-upload-wrapper">
-                            <input type="file" name="certificates[]" id="certificates" class="file-upload-input" accept=".pdf" multiple>
+                            <input type="file" 
+                                   name="certificates[]" 
+                                   id="certificates" 
+                                   class="file-upload-input" 
+                                   accept=".pdf" 
+                                   multiple>
                             <label for="certificates" class="file-upload-label" id="certificates-label">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
@@ -731,7 +788,7 @@
                                 <span>Pilih file PDF (dapat lebih dari 1)</span>
                             </label>
                             <div class="validation-message" id="certificates-error"></div>
-                            <div class="file-preview" id="certificates-preview" style="display: none;"></div>
+                            <div class="file-preview" id="certificates-preview"></div>
                         </div>
                     </div>
                 </div>
@@ -754,7 +811,7 @@
                 </div>
             </div>
 
-            <!-- Submit Button -->
+            <!-- Submit Button - Mobile Optimized -->
             <div class="text-center mt-8">
                 <button type="submit" class="btn-primary px-8 py-3 text-lg" id="submitBtn">
                     Kirim Lamaran
@@ -793,6 +850,5 @@
         });
     </script>
     <script src="{{ asset('js/form-style.js') }}"></script>
-    <!-- <script src="{{ asset('js/ktp-ocr.js') }}"></script> -->
 </body>
 </html>

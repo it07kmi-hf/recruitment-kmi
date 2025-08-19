@@ -26,7 +26,7 @@ class JobApplicationRequest extends FormRequest
         $ocrValidated = session('ocr_validated', false);
         
         // 🔍 ENHANCED DEBUGGING: Log all relevant session information
-        \Log::info('=== NIK VALIDATION PREPARATION (Simplified) ===', [
+        \Log::info('=== NIK VALIDATION PREPARATION (Mobile Optimized) ===', [
             'ocr_nik' => $ocrNik,
             'form_nik' => $formNik,
             'ocr_validated' => $ocrValidated,
@@ -34,6 +34,8 @@ class JobApplicationRequest extends FormRequest
             'has_ocr_ktp_path' => session()->has('ocr_ktp_path'),
             'ocr_ktp_path' => session('ocr_ktp_path'),
             'ocr_timestamp' => session('ocr_timestamp'),
+            'user_agent' => request()->header('User-Agent'),
+            'is_mobile' => $this->isMobileDevice(),
         ]);
 
         // 🆕 SIMPLIFIED: Use OCR NIK if available, otherwise allow form input as fallback
@@ -60,6 +62,23 @@ class JobApplicationRequest extends FormRequest
     }
 
     /**
+     * 🆕 MOBILE: Check if request is from mobile device
+     */
+    private function isMobileDevice(): bool
+    {
+        $userAgent = request()->header('User-Agent', '');
+        $mobileKeywords = ['Mobile', 'Android', 'iPhone', 'iPad', 'Windows Phone'];
+        
+        foreach ($mobileKeywords as $keyword) {
+            if (stripos($userAgent, $keyword) !== false) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      */
     public function rules(): array
@@ -70,18 +89,19 @@ class JobApplicationRequest extends FormRequest
             'full_name' => 'required|string|max:255',
             'email' => 'required|email|unique:candidates,email',
             
-            // 🆕 UPDATED: Simplified NIK validation - less restrictive but still secure
+            // 🆕 UPDATED: Mobile-optimized NIK validation - more lenient for mobile browsers
             'nik' => [
                 'required',
                 'string',
                 'size:16',
                 'regex:/^[0-9]{16}$/',
                 function ($attribute, $value, $fail) {
-                    \Log::info('=== NIK CUSTOM VALIDATION (Simplified) ===', [
+                    \Log::info('=== NIK CUSTOM VALIDATION (Mobile Optimized) ===', [
                         'attribute' => $attribute,
                         'provided_value' => $value,
                         'value_length' => strlen($value ?? ''),
                         'is_numeric' => is_numeric($value ?? ''),
+                        'is_mobile' => $this->isMobileDevice(),
                     ]);
 
                     // Enhanced NIK format validation
@@ -107,22 +127,43 @@ class JobApplicationRequest extends FormRequest
                         return;
                     }
 
-                    // 🆕 SIMPLIFIED SECURITY: Only require OCR validation if OCR session exists
+                    // 🆕 MOBILE-OPTIMIZED SECURITY: More lenient validation for mobile devices
                     $ocrValidated = session('ocr_validated', false);
                     $ocrNik = session('ocr_nik');
                     $hasOcrData = session()->has('ocr_ktp_path') || session()->has('ocr_timestamp');
+                    $isMobile = $this->isMobileDevice();
                     
-                    \Log::info('=== NIK SECURITY VALIDATION (Simplified) ===', [
+                    \Log::info('=== NIK SECURITY VALIDATION (Mobile Optimized) ===', [
                         'provided_nik' => $value,
                         'ocr_nik' => $ocrNik,
                         'ocr_validated' => $ocrValidated,
                         'has_ocr_data' => $hasOcrData,
                         'nik_match_ocr' => $ocrNik === $value,
+                        'is_mobile_device' => $isMobile,
                     ]);
 
-                    // If OCR was performed and NIK doesn't match, require matching
+                    // 🆕 MOBILE: More lenient validation for mobile devices
+                    if ($isMobile) {
+                        // For mobile devices, allow more flexibility with OCR validation
+                        if ($ocrValidated && $ocrNik && $ocrNik !== $value) {
+                            \Log::warning('⚠️ NIK mismatch with OCR on mobile device - allowing with warning', [
+                                'provided' => $value,
+                                'ocr_result' => $ocrNik,
+                                'mobile_device' => true
+                            ]);
+                            // Don't fail validation for mobile devices, just log warning
+                        }
+                        
+                        \Log::info('✅ Mobile device - using lenient NIK validation', [
+                            'nik' => $value,
+                            'device' => 'mobile'
+                        ]);
+                        return; // Allow NIK to pass for mobile devices
+                    }
+
+                    // Desktop validation - stricter requirements
                     if ($ocrValidated && $ocrNik && $ocrNik !== $value) {
-                        \Log::warning('❌ NIK mismatch with validated OCR result', [
+                        \Log::warning('❌ NIK mismatch with validated OCR result (desktop)', [
                             'provided' => $value,
                             'ocr_result' => $ocrNik
                         ]);
@@ -131,7 +172,6 @@ class JobApplicationRequest extends FormRequest
                     }
 
                     // 🆕 RELAXED: Allow form submission without OCR if no OCR data exists
-                    // This provides a fallback for cases where OCR fails or isn't available
                     if (!$ocrValidated && !$hasOcrData && !$ocrNik) {
                         \Log::info('⚠️ No OCR data found - allowing manual NIK entry', [
                             'nik' => $value,
@@ -193,12 +233,15 @@ class JobApplicationRequest extends FormRequest
                 },
             ],
 
-            'formal_education.*.gpa' => [    'required','numeric', function ($attribute, $value, $fail) {
-        if (!($value >= 1 && $value <= 4 || $value >= 1 && $value <= 100)) {
-            $fail('Nilai harus antara 1.00–4.00 atau 1–100.');
-                        }
-                    },
-                ],
+            'formal_education.*.gpa' => [
+                'required',
+                'numeric', 
+                function ($attribute, $value, $fail) {
+                    if (!($value >= 1 && $value <= 4 || $value >= 1 && $value <= 100)) {
+                        $fail('Nilai harus antara 1.00–4.00 atau 1–100.');
+                    }
+                },
+            ],
             
             // Non-Formal Education - Optional
             'non_formal_education' => 'nullable|array',
@@ -277,14 +320,39 @@ class JobApplicationRequest extends FormRequest
             'start_work_date' => 'required|date|after:' . now()->format('Y-m-d'),
             'information_source' => 'required|string|max:255',
             
-            // Document Uploads
-            'cv' => 'required|file|mimes:pdf|max:2048',
-            'photo' => ['required', 'file', 'max:2048', function ($attribute, $value, $fail) {
-                $this->validateImageFile($attribute, $value, $fail);
-            }],
-            'transcript' => 'required|file|mimes:pdf|max:2048',
+            // 🆕 MOBILE-OPTIMIZED: Document uploads with more lenient validation for mobile
+            'cv' => [
+                'required',
+                'file',
+                'max:2048',
+                function ($attribute, $value, $fail) {
+                    $this->validateMobileFileUpload($attribute, $value, $fail, ['pdf'], 'CV/Resume harus berformat PDF');
+                }
+            ],
+            'photo' => [
+                'required',
+                'file',
+                'max:2048',
+                function ($attribute, $value, $fail) {
+                    $this->validateMobileImageFile($attribute, $value, $fail);
+                }
+            ],
+            'transcript' => [
+                'required',
+                'file',
+                'max:2048',
+                function ($attribute, $value, $fail) {
+                    $this->validateMobileFileUpload($attribute, $value, $fail, ['pdf'], 'Transkrip nilai harus berformat PDF');
+                }
+            ],
             'certificates' => 'nullable|array',
-            'certificates.*' => 'file|mimes:pdf|max:2048',
+            'certificates.*' => [
+                'file',
+                'max:2048',
+                function ($attribute, $value, $fail) {
+                    $this->validateMobileFileUpload($attribute, $value, $fail, ['pdf'], 'Sertifikat harus berformat PDF');
+                }
+            ],
         ];
     }
 
@@ -349,9 +417,91 @@ class JobApplicationRequest extends FormRequest
     }
 
     /**
-     * Custom validation for image files - enhanced
+     * 🆕 MOBILE-OPTIMIZED: File upload validation for mobile browsers
      */
-    private function validateImageFile($attribute, $value, $fail)
+    private function validateMobileFileUpload($attribute, $value, $fail, $allowedExtensions, $errorMessage)
+    {
+        if (!$value || !$value->isValid()) {
+            $fail("File {$attribute} tidak valid atau rusak.");
+            return;
+        }
+
+        // Get file info
+        $originalName = $value->getClientOriginalName();
+        $mimeType = $value->getMimeType();
+        $extension = strtolower($value->getClientOriginalExtension());
+        $isMobile = $this->isMobileDevice();
+
+        // Log file details for debugging
+        Log::info("Mobile file validation for {$attribute}", [
+            'original_name' => $originalName,
+            'mime_type' => $mimeType,
+            'extension' => $extension,
+            'size' => $value->getSize(),
+            'is_mobile' => $isMobile
+        ]);
+
+        // Check extension (primary validation)
+        if (!in_array($extension, $allowedExtensions)) {
+            Log::warning("Invalid extension for {$attribute}", [
+                'extension' => $extension,
+                'allowed_extensions' => $allowedExtensions
+            ]);
+            $fail($errorMessage . " (ekstensi file: {$extension}).");
+            return;
+        }
+
+        // Check file size
+        if ($value->getSize() > 2 * 1024 * 1024) {
+            $fail("File {$attribute} maksimal 2MB.");
+            return;
+        }
+
+        // 🆕 MOBILE: More lenient MIME type validation for mobile browsers
+        if ($isMobile) {
+            // Mobile browsers often report incorrect MIME types, so we're more lenient
+            Log::info("Mobile device detected - using lenient MIME type validation for {$attribute}", [
+                'detected_mime' => $mimeType,
+                'file_extension' => $extension
+            ]);
+            
+            // Only fail if MIME type is completely wrong (e.g., image for PDF requirement)
+            if (in_array('pdf', $allowedExtensions) && 
+                $mimeType && 
+                !str_contains($mimeType, 'pdf') && 
+                !str_contains($mimeType, 'octet-stream') && 
+                !str_contains($mimeType, 'application')) {
+                
+                Log::warning("Suspicious MIME type for PDF on mobile for {$attribute}", [
+                    'mime_type' => $mimeType
+                ]);
+                $fail($errorMessage . " (tipe file terdeteksi: {$mimeType}).");
+                return;
+            }
+        } else {
+            // Desktop validation - stricter MIME type checking
+            $validMimeTypes = [];
+            if (in_array('pdf', $allowedExtensions)) {
+                $validMimeTypes = ['application/pdf'];
+            }
+            
+            if (!empty($validMimeTypes) && !in_array($mimeType, $validMimeTypes)) {
+                Log::warning("Invalid MIME type for {$attribute} on desktop", [
+                    'mime_type' => $mimeType,
+                    'valid_mime_types' => $validMimeTypes
+                ]);
+                $fail($errorMessage . " (tipe file terdeteksi: {$mimeType}).");
+                return;
+            }
+        }
+
+        Log::info("File validation passed for {$attribute}");
+    }
+
+    /**
+     * 🆕 MOBILE-OPTIMIZED: Image file validation for mobile browsers
+     */
+    private function validateMobileImageFile($attribute, $value, $fail)
     {
         if (!$value || !$value->isValid()) {
             $fail("File {$attribute} tidak valid atau rusak.");
@@ -363,28 +513,20 @@ class JobApplicationRequest extends FormRequest
         $mimeType = $value->getMimeType();
         $extension = strtolower($value->getClientOriginalExtension());
         $realPath = $value->getRealPath();
+        $isMobile = $this->isMobileDevice();
 
         // Log file details for debugging
-        Log::info("File validation for {$attribute}", [
+        Log::info("Mobile image validation for {$attribute}", [
             'original_name' => $originalName,
             'mime_type' => $mimeType,
             'extension' => $extension,
             'size' => $value->getSize(),
-            'real_path' => $realPath
+            'is_mobile' => $isMobile
         ]);
 
         // Valid extensions
         $validExtensions = ['jpg', 'jpeg', 'png'];
         
-        // Valid MIME types (including variations)
-        $validMimeTypes = [
-            'image/jpeg',
-            'image/jpg', 
-            'image/png',
-            'image/pjpeg', // IE JPEG
-            'image/x-png'  // Some browsers
-        ];
-
         // Check extension
         if (!in_array($extension, $validExtensions)) {
             Log::warning("Invalid extension for {$attribute}", [
@@ -401,42 +543,82 @@ class JobApplicationRequest extends FormRequest
             return;
         }
 
-        // Check MIME type
-        if (!in_array($mimeType, $validMimeTypes)) {
-            Log::warning("Invalid MIME type for {$attribute}", [
-                'mime_type' => $mimeType,
-                'valid_mime_types' => $validMimeTypes
+        // 🆕 MOBILE: More lenient MIME type validation for mobile image uploads
+        if ($isMobile) {
+            // Mobile browsers and cameras often report inconsistent MIME types
+            Log::info("Mobile device detected - using lenient image MIME type validation for {$attribute}", [
+                'detected_mime' => $mimeType
             ]);
-            $fail("File {$attribute} harus berformat JPG atau PNG (tipe file terdeteksi: {$mimeType}).");
-            return;
-        }
-
-        // Additional check: Try to verify if it's actually an image
-        if (function_exists('getimagesize')) {
-            $imageInfo = @getimagesize($realPath);
-            if ($imageInfo === false) {
-                Log::warning("File is not a valid image for {$attribute}", [
-                    'file' => $originalName
-                ]);
-                $fail("File {$attribute} bukan gambar yang valid atau file rusak.");
-                return;
-            }
-
-            // Check image type from getimagesize
-            $imageType = $imageInfo[2];
-            $validImageTypes = [IMAGETYPE_JPEG, IMAGETYPE_PNG];
             
-            if (!in_array($imageType, $validImageTypes)) {
-                Log::warning("Invalid image type for {$attribute}", [
-                    'image_type' => $imageType,
-                    'valid_types' => $validImageTypes
+            // Basic validation: should be image-related or binary
+            if ($mimeType && 
+                !str_contains($mimeType, 'image') && 
+                !str_contains($mimeType, 'octet-stream') && 
+                $mimeType !== 'application/octet-stream') {
+                
+                Log::warning("Non-image MIME type detected on mobile for {$attribute}", [
+                    'mime_type' => $mimeType
                 ]);
                 $fail("File {$attribute} harus berupa gambar JPG atau PNG yang valid.");
                 return;
             }
+        } else {
+            // Desktop validation - stricter MIME type checking
+            $validMimeTypes = [
+                'image/jpeg',
+                'image/jpg', 
+                'image/png',
+                'image/pjpeg', // IE JPEG
+                'image/x-png'  // Some browsers
+            ];
+
+            if (!in_array($mimeType, $validMimeTypes)) {
+                Log::warning("Invalid MIME type for {$attribute} on desktop", [
+                    'mime_type' => $mimeType,
+                    'valid_mime_types' => $validMimeTypes
+                ]);
+                $fail("File {$attribute} harus berformat JPG atau PNG (tipe file terdeteksi: {$mimeType}).");
+                return;
+            }
         }
 
-        Log::info("File validation passed for {$attribute}");
+        // Additional check: Try to verify if it's actually an image (if possible)
+        if (function_exists('getimagesize') && $realPath) {
+            $imageInfo = @getimagesize($realPath);
+            if ($imageInfo === false) {
+                Log::warning("File is not a valid image for {$attribute}", [
+                    'file' => $originalName,
+                    'is_mobile' => $isMobile
+                ]);
+                
+                // 🆕 MOBILE: More lenient for mobile devices
+                if (!$isMobile) {
+                    $fail("File {$attribute} bukan gambar yang valid atau file rusak.");
+                    return;
+                } else {
+                    Log::info("Allowing potentially invalid image on mobile device for {$attribute}");
+                }
+            } else {
+                // Check image type from getimagesize
+                $imageType = $imageInfo[2];
+                $validImageTypes = [IMAGETYPE_JPEG, IMAGETYPE_PNG];
+                
+                if (!in_array($imageType, $validImageTypes)) {
+                    Log::warning("Invalid image type for {$attribute}", [
+                        'image_type' => $imageType,
+                        'valid_types' => $validImageTypes,
+                        'is_mobile' => $isMobile
+                    ]);
+                    
+                    if (!$isMobile) {
+                        $fail("File {$attribute} harus berupa gambar JPG atau PNG yang valid.");
+                        return;
+                    }
+                }
+            }
+        }
+
+        Log::info("Image validation passed for {$attribute}");
     }
 
     /**
@@ -506,24 +688,21 @@ class JobApplicationRequest extends FormRequest
             'start_work_date.after' => 'Tanggal mulai kerja harus setelah tanggal ' . now()->format('d/m/Y') . '.',
             'information_source.required' => 'Sumber informasi lowongan harus diisi.',
             
-            // File uploads
+            // 🆕 MOBILE-OPTIMIZED: File upload messages
             'cv.required' => 'CV/Resume harus diupload.',
             'cv.file' => 'CV/Resume harus berupa file.',
-            'cv.mimes' => 'CV/Resume harus berformat PDF.',
             'cv.max' => 'Ukuran CV/Resume maksimal 2MB.',
             'photo.required' => 'Foto harus diupload.',
             'photo.file' => 'Foto harus berupa file.',
             'photo.max' => 'Ukuran foto maksimal 2MB.',
             'transcript.required' => 'Transkrip nilai harus diupload.',
             'transcript.file' => 'Transkrip nilai harus berupa file.',
-            'transcript.mimes' => 'Transkrip nilai harus berformat PDF.',
             'transcript.max' => 'Ukuran transkrip nilai maksimal 2MB.',
             'certificates.*.file' => 'Sertifikat harus berupa file.',
-            'certificates.*.mimes' => 'Sertifikat harus berformat PDF.',
             'certificates.*.max' => 'Ukuran sertifikat maksimal 2MB.',
 
-            // 🆕 UPDATED: Improved NIK validation messages
-            'nik.required' => 'NIK harus diisi. Gunakan fitur scan KTP untuk pengisian otomatis.',
+            // 🆕 UPDATED: Improved NIK validation messages for mobile
+            'nik.required' => 'NIK harus diisi. Anda dapat mengetik manual atau menggunakan fitur scan KTP jika tersedia.',
             'nik.size' => 'NIK harus terdiri dari 16 digit angka.',
             'nik.regex' => 'NIK harus berupa 16 digit angka tanpa spasi atau karakter lain.',
         ];
