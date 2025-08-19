@@ -320,11 +320,11 @@ class JobApplicationRequest extends FormRequest
             'start_work_date' => 'required|date|after:' . now()->format('Y-m-d'),
             'information_source' => 'required|string|max:255',
             
-            // 🆕 MOBILE-OPTIMIZED: Document uploads with more lenient validation for mobile
+            // 🆕 MOBILE-OPTIMIZED: Document uploads with enhanced mobile compatibility
             'cv' => [
                 'required',
                 'file',
-                'max:2048',
+                'max:2048', // 2MB limit
                 function ($attribute, $value, $fail) {
                     $this->validateMobileFileUpload($attribute, $value, $fail, ['pdf'], 'CV/Resume harus berformat PDF');
                 }
@@ -332,7 +332,7 @@ class JobApplicationRequest extends FormRequest
             'photo' => [
                 'required',
                 'file',
-                'max:2048',
+                'max:2048', // 2MB limit
                 function ($attribute, $value, $fail) {
                     $this->validateMobileImageFile($attribute, $value, $fail);
                 }
@@ -340,7 +340,7 @@ class JobApplicationRequest extends FormRequest
             'transcript' => [
                 'required',
                 'file',
-                'max:2048',
+                'max:2048', // 2MB limit
                 function ($attribute, $value, $fail) {
                     $this->validateMobileFileUpload($attribute, $value, $fail, ['pdf'], 'Transkrip nilai harus berformat PDF');
                 }
@@ -348,7 +348,7 @@ class JobApplicationRequest extends FormRequest
             'certificates' => 'nullable|array',
             'certificates.*' => [
                 'file',
-                'max:2048',
+                'max:2048', // 2MB limit
                 function ($attribute, $value, $fail) {
                     $this->validateMobileFileUpload($attribute, $value, $fail, ['pdf'], 'Sertifikat harus berformat PDF');
                 }
@@ -417,7 +417,7 @@ class JobApplicationRequest extends FormRequest
     }
 
     /**
-     * 🆕 MOBILE-OPTIMIZED: File upload validation for mobile browsers
+     * 🆕 MOBILE-OPTIMIZED: Enhanced file upload validation for mobile browsers
      */
     private function validateMobileFileUpload($attribute, $value, $fail, $allowedExtensions, $errorMessage)
     {
@@ -430,54 +430,80 @@ class JobApplicationRequest extends FormRequest
         $originalName = $value->getClientOriginalName();
         $mimeType = $value->getMimeType();
         $extension = strtolower($value->getClientOriginalExtension());
+        $fileSize = $value->getSize();
         $isMobile = $this->isMobileDevice();
 
-        // Log file details for debugging
-        Log::info("Mobile file validation for {$attribute}", [
+        // Enhanced logging for mobile debugging
+        Log::info("📱 Mobile file validation for {$attribute}", [
             'original_name' => $originalName,
             'mime_type' => $mimeType,
             'extension' => $extension,
-            'size' => $value->getSize(),
-            'is_mobile' => $isMobile
+            'size' => $fileSize,
+            'size_mb' => round($fileSize / 1024 / 1024, 2),
+            'is_mobile' => $isMobile,
+            'user_agent' => request()->header('User-Agent'),
+            'content_length' => request()->header('Content-Length'),
         ]);
 
-        // Check extension (primary validation)
-        if (!in_array($extension, $allowedExtensions)) {
-            Log::warning("Invalid extension for {$attribute}", [
-                'extension' => $extension,
-                'allowed_extensions' => $allowedExtensions
+        // Check file size first (most important for mobile)
+        if ($fileSize > 2 * 1024 * 1024) {
+            $sizeMB = round($fileSize / 1024 / 1024, 2);
+            Log::warning("File size exceeded for {$attribute}", [
+                'size_mb' => $sizeMB,
+                'limit_mb' => 2
             ]);
-            $fail($errorMessage . " (ekstensi file: {$extension}).");
+            $fail("File {$attribute} terlalu besar ({$sizeMB}MB). Maksimal 2MB.");
             return;
         }
 
-        // Check file size
-        if ($value->getSize() > 2 * 1024 * 1024) {
-            $fail("File {$attribute} maksimal 2MB.");
+        // Check extension (primary validation for mobile)
+        if (!in_array($extension, $allowedExtensions)) {
+            Log::warning("Invalid extension for {$attribute}", [
+                'extension' => $extension,
+                'allowed_extensions' => $allowedExtensions,
+                'is_mobile' => $isMobile
+            ]);
+            $allowedExtensionsStr = strtoupper(implode(', ', $allowedExtensions));
+            $fail($errorMessage . " Format file: {$extension}. Yang diizinkan: {$allowedExtensionsStr}.");
             return;
         }
 
         // 🆕 MOBILE: More lenient MIME type validation for mobile browsers
         if ($isMobile) {
-            // Mobile browsers often report incorrect MIME types, so we're more lenient
-            Log::info("Mobile device detected - using lenient MIME type validation for {$attribute}", [
+            // Mobile browsers often report incorrect or inconsistent MIME types
+            Log::info("📱 Mobile device detected - using lenient MIME type validation for {$attribute}", [
                 'detected_mime' => $mimeType,
                 'file_extension' => $extension
             ]);
             
-            // Only fail if MIME type is completely wrong (e.g., image for PDF requirement)
-            if (in_array('pdf', $allowedExtensions) && 
-                $mimeType && 
-                !str_contains($mimeType, 'pdf') && 
-                !str_contains($mimeType, 'octet-stream') && 
-                !str_contains($mimeType, 'application')) {
+            // For mobile, we primarily rely on extension validation
+            // Only fail if MIME type is completely incompatible
+            if (in_array('pdf', $allowedExtensions)) {
+                // For PDF files on mobile
+                $validMobileTypes = [
+                    'application/pdf',
+                    'application/octet-stream',
+                    'application/x-pdf',
+                    'application/vnd.pdf',
+                    'text/pdf',
+                    'text/x-pdf',
+                    '' // Some mobile browsers don't send MIME type
+                ];
                 
-                Log::warning("Suspicious MIME type for PDF on mobile for {$attribute}", [
-                    'mime_type' => $mimeType
-                ]);
-                $fail($errorMessage . " (tipe file terdeteksi: {$mimeType}).");
-                return;
+                if ($mimeType && !in_array($mimeType, $validMobileTypes) && 
+                    !str_contains($mimeType, 'pdf') && 
+                    !str_contains($mimeType, 'octet-stream')) {
+                    
+                    Log::warning("📱 Incompatible MIME type for PDF on mobile for {$attribute}", [
+                        'mime_type' => $mimeType,
+                        'extension' => $extension
+                    ]);
+                    $fail($errorMessage . " File tidak kompatibel dengan format PDF.");
+                    return;
+                }
             }
+            
+            Log::info("📱 Mobile file validation passed for {$attribute}");
         } else {
             // Desktop validation - stricter MIME type checking
             $validMimeTypes = [];
@@ -490,16 +516,32 @@ class JobApplicationRequest extends FormRequest
                     'mime_type' => $mimeType,
                     'valid_mime_types' => $validMimeTypes
                 ]);
-                $fail($errorMessage . " (tipe file terdeteksi: {$mimeType}).");
+                $fail($errorMessage . " Tipe file tidak valid: {$mimeType}.");
+                return;
+            }
+            
+            Log::info("🖥️ Desktop file validation passed for {$attribute}");
+        }
+
+        // 🆕 MOBILE: Additional file integrity check for mobile uploads
+        if ($isMobile && $fileSize > 0) {
+            // Check if file can be read (basic integrity check)
+            $tmpPath = $value->getRealPath();
+            if ($tmpPath && !is_readable($tmpPath)) {
+                Log::warning("📱 File not readable for {$attribute} on mobile", [
+                    'tmp_path' => $tmpPath,
+                    'file_name' => $originalName
+                ]);
+                $fail("File {$attribute} tidak dapat dibaca. Coba upload ulang.");
                 return;
             }
         }
 
-        Log::info("File validation passed for {$attribute}");
+        Log::info("✅ Mobile file validation completed successfully for {$attribute}");
     }
 
     /**
-     * 🆕 MOBILE-OPTIMIZED: Image file validation for mobile browsers
+     * 🆕 MOBILE-OPTIMIZED: Enhanced image file validation for mobile browsers
      */
     private function validateMobileImageFile($attribute, $value, $fail)
     {
@@ -513,51 +555,71 @@ class JobApplicationRequest extends FormRequest
         $mimeType = $value->getMimeType();
         $extension = strtolower($value->getClientOriginalExtension());
         $realPath = $value->getRealPath();
+        $fileSize = $value->getSize();
         $isMobile = $this->isMobileDevice();
 
-        // Log file details for debugging
-        Log::info("Mobile image validation for {$attribute}", [
+        // Enhanced logging for mobile image debugging
+        Log::info("📱 Mobile image validation for {$attribute}", [
             'original_name' => $originalName,
             'mime_type' => $mimeType,
             'extension' => $extension,
-            'size' => $value->getSize(),
-            'is_mobile' => $isMobile
+            'size' => $fileSize,
+            'size_mb' => round($fileSize / 1024 / 1024, 2),
+            'is_mobile' => $isMobile,
+            'user_agent' => request()->header('User-Agent'),
         ]);
 
-        // Valid extensions
+        // Valid extensions for images
         $validExtensions = ['jpg', 'jpeg', 'png'];
+        
+        // Check file size first
+        if ($fileSize > 2 * 1024 * 1024) {
+            $sizeMB = round($fileSize / 1024 / 1024, 2);
+            Log::warning("Image file size exceeded for {$attribute}", [
+                'size_mb' => $sizeMB,
+                'limit_mb' => 2
+            ]);
+            $fail("File {$attribute} terlalu besar ({$sizeMB}MB). Maksimal 2MB.");
+            return;
+        }
         
         // Check extension
         if (!in_array($extension, $validExtensions)) {
-            Log::warning("Invalid extension for {$attribute}", [
+            Log::warning("Invalid image extension for {$attribute}", [
                 'extension' => $extension,
                 'valid_extensions' => $validExtensions
             ]);
-            $fail("File {$attribute} harus berformat JPG atau PNG (ekstensi file: {$extension}).");
-            return;
-        }
-
-        // Check file size
-        if ($value->getSize() > 2 * 1024 * 1024) {
-            $fail("File {$attribute} maksimal 2MB.");
+            $fail("File {$attribute} harus berformat JPG atau PNG. Format file: {$extension}.");
             return;
         }
 
         // 🆕 MOBILE: More lenient MIME type validation for mobile image uploads
         if ($isMobile) {
-            // Mobile browsers and cameras often report inconsistent MIME types
-            Log::info("Mobile device detected - using lenient image MIME type validation for {$attribute}", [
+            // Mobile browsers and cameras often report inconsistent MIME types for images
+            Log::info("📱 Mobile device detected - using lenient image MIME type validation for {$attribute}", [
                 'detected_mime' => $mimeType
             ]);
             
+            // Valid MIME types for mobile (more inclusive)
+            $validMobileMimeTypes = [
+                'image/jpeg',
+                'image/jpg',
+                'image/png', 
+                'image/pjpeg', // IE/older browsers
+                'image/x-png', // Some browsers
+                'application/octet-stream', // Generic binary
+                'image/webp', // Some mobile cameras
+                '' // Some mobile browsers don't send MIME type
+            ];
+            
             // Basic validation: should be image-related or binary
-            if ($mimeType && 
+            if ($mimeType && !in_array($mimeType, $validMobileMimeTypes) && 
                 !str_contains($mimeType, 'image') && 
-                !str_contains($mimeType, 'octet-stream') && 
-                $mimeType !== 'application/octet-stream') {
+                !str_contains($mimeType, 'octet-stream')) {
                 
-                Log::warning("Non-image MIME type detected on mobile for {$attribute}", [
-                    'mime_type' => $mimeType
+                Log::warning("📱 Incompatible MIME type for image on mobile for {$attribute}", [
+                    'mime_type' => $mimeType,
+                    'extension' => $extension
                 ]);
                 $fail("File {$attribute} harus berupa gambar JPG atau PNG yang valid.");
                 return;
@@ -577,48 +639,63 @@ class JobApplicationRequest extends FormRequest
                     'mime_type' => $mimeType,
                     'valid_mime_types' => $validMimeTypes
                 ]);
-                $fail("File {$attribute} harus berformat JPG atau PNG (tipe file terdeteksi: {$mimeType}).");
+                $fail("File {$attribute} harus berformat JPG atau PNG. Tipe file: {$mimeType}.");
                 return;
             }
         }
 
-        // Additional check: Try to verify if it's actually an image (if possible)
-        if (function_exists('getimagesize') && $realPath) {
+        // 🆕 MOBILE: Optional image integrity check (if getimagesize is available)
+        if (function_exists('getimagesize') && $realPath && is_readable($realPath)) {
             $imageInfo = @getimagesize($realPath);
             if ($imageInfo === false) {
-                Log::warning("File is not a valid image for {$attribute}", [
+                Log::warning("📱 Image integrity check failed for {$attribute}", [
                     'file' => $originalName,
-                    'is_mobile' => $isMobile
+                    'is_mobile' => $isMobile,
+                    'real_path_exists' => file_exists($realPath)
                 ]);
                 
-                // 🆕 MOBILE: More lenient for mobile devices
+                // 🆕 MOBILE: More lenient for mobile devices - only warn, don't fail
                 if (!$isMobile) {
                     $fail("File {$attribute} bukan gambar yang valid atau file rusak.");
                     return;
                 } else {
-                    Log::info("Allowing potentially invalid image on mobile device for {$attribute}");
+                    Log::info("📱 Allowing potentially invalid image on mobile device for {$attribute}");
                 }
             } else {
-                // Check image type from getimagesize
+                // Additional check: verify image type matches extension
                 $imageType = $imageInfo[2];
                 $validImageTypes = [IMAGETYPE_JPEG, IMAGETYPE_PNG];
                 
                 if (!in_array($imageType, $validImageTypes)) {
-                    Log::warning("Invalid image type for {$attribute}", [
-                        'image_type' => $imageType,
+                    Log::warning("📱 Image type mismatch for {$attribute}", [
+                        'detected_type' => $imageType,
                         'valid_types' => $validImageTypes,
                         'is_mobile' => $isMobile
                     ]);
                     
+                    // More lenient for mobile
                     if (!$isMobile) {
                         $fail("File {$attribute} harus berupa gambar JPG atau PNG yang valid.");
                         return;
+                    } else {
+                        Log::info("📱 Allowing image type mismatch on mobile device for {$attribute}");
                     }
                 }
+                
+                Log::info("📱 Image integrity check passed for {$attribute}", [
+                    'width' => $imageInfo[0],
+                    'height' => $imageInfo[1],
+                    'type' => $imageType
+                ]);
             }
+        } else {
+            Log::info("📱 Skipping image integrity check for {$attribute}", [
+                'getimagesize_available' => function_exists('getimagesize'),
+                'real_path_readable' => $realPath ? is_readable($realPath) : false
+            ]);
         }
 
-        Log::info("Image validation passed for {$attribute}");
+        Log::info("✅ Mobile image validation completed successfully for {$attribute}");
     }
 
     /**
@@ -688,18 +765,18 @@ class JobApplicationRequest extends FormRequest
             'start_work_date.after' => 'Tanggal mulai kerja harus setelah tanggal ' . now()->format('d/m/Y') . '.',
             'information_source.required' => 'Sumber informasi lowongan harus diisi.',
             
-            // 🆕 MOBILE-OPTIMIZED: File upload messages
+            // 🆕 MOBILE-OPTIMIZED: Enhanced file upload messages
             'cv.required' => 'CV/Resume harus diupload.',
-            'cv.file' => 'CV/Resume harus berupa file.',
+            'cv.file' => 'CV/Resume harus berupa file yang valid.',
             'cv.max' => 'Ukuran CV/Resume maksimal 2MB.',
             'photo.required' => 'Foto harus diupload.',
-            'photo.file' => 'Foto harus berupa file.',
+            'photo.file' => 'Foto harus berupa file gambar yang valid.',
             'photo.max' => 'Ukuran foto maksimal 2MB.',
             'transcript.required' => 'Transkrip nilai harus diupload.',
-            'transcript.file' => 'Transkrip nilai harus berupa file.',
+            'transcript.file' => 'Transkrip nilai harus berupa file yang valid.',
             'transcript.max' => 'Ukuran transkrip nilai maksimal 2MB.',
-            'certificates.*.file' => 'Sertifikat harus berupa file.',
-            'certificates.*.max' => 'Ukuran sertifikat maksimal 2MB.',
+            'certificates.*.file' => 'Sertifikat harus berupa file yang valid.',
+            'certificates.*.max' => 'Ukuran setiap sertifikat maksimal 2MB.',
 
             // 🆕 UPDATED: Improved NIK validation messages for mobile
             'nik.required' => 'NIK harus diisi. Anda dapat mengetik manual atau menggunakan fitur scan KTP jika tersedia.',
