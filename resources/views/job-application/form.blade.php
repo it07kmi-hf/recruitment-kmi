@@ -2,14 +2,119 @@
 <html lang="id-ID">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, minimum-scale=1.0, maximum-scale=5.0">
     <meta http-equiv="Content-Language" content="id-ID">
+    <meta name="format-detection" content="telephone=no">
     <title>Form Lamaran Kerja - PT Kayu Mebel Indonesia</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link href="{{ asset('css/form-style.css') }}" rel="stylesheet">
-    <!-- <link href="{{ asset('css/ktp-ocr.css') }}" rel="stylesheet"> -->
-
+    <!-- Mobile Upload Optimization -->
+    <style>
+        /* Critical CSS for mobile file upload optimization */
+        .form-input {
+            font-size: 16px !important; /* Prevent zoom on iOS */
+        }
+        
+        /* Mobile-first file input optimization */
+        .mobile-file-upload {
+            position: relative;
+            display: block;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .mobile-file-input {
+            width: 100%;
+            height: 60px;
+            padding: 16px;
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            background: #f9fafb;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-file-input:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        .mobile-file-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .mobile-file-input.has-file {
+            border-color: #10b981;
+            border-style: solid;
+            background: #ecfdf5;
+        }
+        
+        .mobile-file-input.error {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+        
+        .file-info {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: #f3f4f6;
+            border-radius: 6px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .file-info.show {
+            display: block;
+        }
+        
+        .file-error {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: #fef2f2;
+            color: #dc2626;
+            border-radius: 6px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .file-error.show {
+            display: block;
+        }
+        
+        /* Touch target optimization */
+        .btn-primary,
+        .btn-secondary,
+        .btn-add,
+        .btn-remove {
+            min-height: 44px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Prevent horizontal scroll on mobile */
+        body, html {
+            overflow-x: hidden;
+        }
+        
+        .max-w-4xl {
+            max-width: calc(100vw - 32px);
+        }
+        
+        @media (max-width: 768px) {
+            .max-w-4xl {
+                max-width: calc(100vw - 16px);
+            }
+            
+            .mobile-file-input {
+                height: 70px;
+                font-size: 14px;
+            }
+        }
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <div class="max-w-4xl mx-auto py-8 px-4">
@@ -63,7 +168,6 @@
                                    required
                                    inputmode="numeric">
                         </div>
-                        
                     </div>
                 </div>
             </div>
@@ -89,20 +193,19 @@
                         <label class="form-label" for="nik">NIK (Nomor Induk Kependudukan) <span class="required-star">*</span></label>
                         <input type="text" name="nik" id="nik" class="form-input" 
                             value="{{ old('nik') }}" maxlength="16" pattern="[0-9]{16}" 
-                            placeholder="Masukkan 16 digit NIK" required>
+                            placeholder="Masukkan 16 digit NIK" required inputmode="numeric">
                         <small class="text-gray-500 text-xs">NIK harus 16 digit angka sesuai KTP</small>
-                        <!-- Enhanced OCR Upload Area akan ditambahkan di sini oleh JavaScript -->
                     </div>
                     
                     <div class="form-group">
                         <label class="form-label" for="phone_number">Nomor Telepon <span class="required-star">*</span></label>
-                        <input type="text" name="phone_number" id="phone_number" class="form-input" 
+                        <input type="tel" name="phone_number" id="phone_number" class="form-input" 
                                value="{{ old('phone_number') }}" placeholder="08xxxxxxxxxx" required>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="phone_alternative">Telepon Alternatif <span class="required-star">*</span></label>
-                        <input type="text" name="phone_alternative" id="phone_alternative" class="form-input" 
+                        <input type="tel" name="phone_alternative" id="phone_alternative" class="form-input" 
                                value="{{ old('phone_alternative') }}" placeholder="08xxxxxxxxxx" required>
                     </div>
                     
@@ -158,27 +261,26 @@
                     </div>
 
                     <div class="mt-2">
-                            <label class="form-label" for="current_address_status">Status Tempat Tinggal <span class="required-star">*</span></label>
-                            <select name="current_address_status" id="current_address_status" class="form-input" required>
-                                <option value="">Pilih Status</option>
-                                <option value="Milik Sendiri" {{ old('current_address_status') == 'Milik Sendiri' ? 'selected' : '' }}>Milik Sendiri</option>
-                                <option value="Orang Tua" {{ old('current_address_status') == 'Orang Tua' ? 'selected' : '' }}>Orang Tua</option>
-                                <option value="Kontrak" {{ old('current_address_status') == 'Kontrak' ? 'selected' : '' }}>Kontrak</option>
-                                <option value="Sewa" {{ old('current_address_status') == 'Sewa' ? 'selected' : '' }}>Sewa</option>
-                            </select>
-                        </div>
+                        <label class="form-label" for="current_address_status">Status Tempat Tinggal <span class="required-star">*</span></label>
+                        <select name="current_address_status" id="current_address_status" class="form-input" required>
+                            <option value="">Pilih Status</option>
+                            <option value="Milik Sendiri" {{ old('current_address_status') == 'Milik Sendiri' ? 'selected' : '' }}>Milik Sendiri</option>
+                            <option value="Orang Tua" {{ old('current_address_status') == 'Orang Tua' ? 'selected' : '' }}>Orang Tua</option>
+                            <option value="Kontrak" {{ old('current_address_status') == 'Kontrak' ? 'selected' : '' }}>Kontrak</option>
+                            <option value="Sewa" {{ old('current_address_status') == 'Sewa' ? 'selected' : '' }}>Sewa</option>
+                        </select>
+                    </div>
                     
                     <div class="form-group">
                         <label class="form-label" for="current_address">Alamat Tempat Tinggal Saat Ini <span class="required-star">*</span></label>
                         <textarea name="current_address" id="current_address" class="form-input" rows="3" required>{{ old('current_address') }}</textarea>
-                        <!-- Address Copy Feature -->                        
                     </div>
                     <div class="address-copy-section">
-                            <label class="address-copy-checkbox">
-                                <input type="checkbox" id="copy_ktp_address" {{ old('copy_ktp_address') ? 'checked' : '' }}>
-                                <span>Sama dengan alamat KTP</span>
-                            </label>
-                        </div>  
+                        <label class="address-copy-checkbox">
+                            <input type="checkbox" id="copy_ktp_address" {{ old('copy_ktp_address') ? 'checked' : '' }}>
+                            <span>Sama dengan alamat KTP</span>
+                        </label>
+                    </div>  
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
@@ -208,119 +310,116 @@
             </div>
 
             <!-- 3. Data Keluarga -->
-<div class="form-section" data-section="3">
-    <h2 class="section-title">Data Keluarga <span class="required-star">*</span></h2>
-    
-   
-    
-    <div id="familyMembers">
-        <!-- Ayah - Index 0 -->
-        <div class="dynamic-group" data-index="0">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="form-group">
-                    <label class="form-label">Hubungan Keluarga <span class="required-star">*</span></label>
-                    <select name="family_members[0][relationship]" class="form-input" required>
-                        <option value="">Pilih Hubungan</option>
-                        <option value="Ayah" selected>Ayah</option>
-                        <option value="Ibu">Ibu</option>
-                        <option value="Saudara">Saudara</option>
-                        <option value="Anak">Anak</option>
+            <div class="form-section" data-section="3">
+                <h2 class="section-title">Data Keluarga <span class="required-star">*</span></h2>
+                
+                <div id="familyMembers">
+                    <!-- Ayah - Index 0 -->
+                    <div class="dynamic-group" data-index="0">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="form-group">
+                                <label class="form-label">Hubungan Keluarga <span class="required-star">*</span></label>
+                                <select name="family_members[0][relationship]" class="form-input" required>
+                                    <option value="">Pilih Hubungan</option>
+                                    <option value="Ayah" selected>Ayah</option>
+                                    <option value="Ibu">Ibu</option>
+                                    <option value="Saudara">Saudara</option>
+                                    <option value="Anak">Anak</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nama <span class="required-star">*</span></label>
+                                <input type="text" name="family_members[0][name]" class="form-input" placeholder="Nama lengkap ayah" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Usia <span class="required-star">*</span></label>
+                                <input type="number" name="family_members[0][age]" class="form-input" min="0" max="120" placeholder="Contoh: 55" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Pendidikan <span class="required-star">*</span></label>
+                                <input type="text" name="family_members[0][education]" class="form-input" placeholder="Contoh: SMA, S1, dll" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Pekerjaan <span class="required-star">*</span></label>
+                                <input type="text" name="family_members[0][occupation]" class="form-input" placeholder="Contoh: Pensiunan, Petani, dll" required>
+                            </div>
+                            <div class="form-group flex items-end">
+                                <button type="button" class="btn-remove" onclick="removeFamilyMember(this)">Hapus</button>
+                            </div>
+                        </div>
+                    </div>
 
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Nama <span class="required-star">*</span></label>
-                    <input type="text" name="family_members[0][name]" class="form-input" placeholder="Nama lengkap ayah" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Usia <span class="required-star">*</span></label>
-                    <input type="number" name="family_members[0][age]" class="form-input" min="0" max="120" placeholder="Contoh: 55" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Pendidikan <span class="required-star">*</span></label>
-                    <input type="text" name="family_members[0][education]" class="form-input" placeholder="Contoh: SMA, S1, dll" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Pekerjaan <span class="required-star">*</span></label>
-                    <input type="text" name="family_members[0][occupation]" class="form-input" placeholder="Contoh: Pensiunan, Petani, dll" required>
-                </div>
-                <div class="form-group flex items-end">
-                    <button type="button" class="btn-remove" onclick="removeFamilyMember(this)">Hapus</button>
-                </div>
-            </div>
-        </div>
+                    <!-- Ibu - Index 1 -->
+                    <div class="dynamic-group" data-index="1">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="form-group">
+                                <label class="form-label">Hubungan Keluarga <span class="required-star">*</span></label>
+                                <select name="family_members[1][relationship]" class="form-input" required>
+                                    <option value="">Pilih Hubungan</option>
+                                    <option value="Ayah">Ayah</option>
+                                    <option value="Ibu" selected>Ibu</option>
+                                    <option value="Pasangan">Pasangan</option>
+                                    <option value="Anak">Anak</option>
+                                    <option value="Saudara">Saudara</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nama <span class="required-star">*</span></label>
+                                <input type="text" name="family_members[1][name]" class="form-input" placeholder="Nama lengkap ibu" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Usia <span class="required-star">*</span></label>
+                                <input type="number" name="family_members[1][age]" class="form-input" min="0" max="120" placeholder="Contoh: 45" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Pendidikan <span class="required-star">*</span></label>
+                                <input type="text" name="family_members[1][education]" class="form-input" placeholder="Contoh: SMA, S1, dll" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Pekerjaan <span class="required-star">*</span></label>
+                                <input type="text" name="family_members[1][occupation]" class="form-input" placeholder="Contoh: Ibu rumah tangga, Guru, dll" required>
+                            </div>
+                            <div class="form-group flex items-end">
+                                <button type="button" class="btn-remove" onclick="removeFamilyMember(this)">Hapus</button>
+                            </div>
+                        </div>
+                    </div>
 
-        <!-- Ibu - Index 1 -->
-        <div class="dynamic-group" data-index="1">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="form-group">
-                    <label class="form-label">Hubungan Keluarga <span class="required-star">*</span></label>
-                    <select name="family_members[1][relationship]" class="form-input" required>
-                        <option value="">Pilih Hubungan</option>
-                        <option value="Ayah">Ayah</option>
-                        <option value="Ibu" selected>Ibu</option>
-                        <option value="Pasangan">Pasangan</option>
-                        <option value="Anak">Anak</option>
-                        <option value="Saudara">Saudara</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Nama <span class="required-star">*</span></label>
-                    <input type="text" name="family_members[1][name]" class="form-input" placeholder="Nama lengkap ibu" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Usia <span class="required-star">*</span></label>
-                    <input type="number" name="family_members[1][age]" class="form-input" min="0" max="120" placeholder="Contoh: 45" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Pendidikan <span class="required-star">*</span></label>
-                    <input type="text" name="family_members[1][education]" class="form-input" placeholder="Contoh: SMA, S1, dll" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Pekerjaan <span class="required-star">*</span></label>
-                    <input type="text" name="family_members[1][occupation]" class="form-input" placeholder="Contoh: Ibu rumah tangga, Guru, dll" required>
-                </div>
-                <div class="form-group flex items-end">
-                    <button type="button" class="btn-remove" onclick="removeFamilyMember(this)">Hapus</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pasangan - Index 2 -->
-        <div class="dynamic-group" data-index="2">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="form-group">
-                    <label class="form-label">Hubungan Keluarga <span class="required-star">*</span></label>
-                    <select name="family_members[2][relationship]" class="form-input" required>
-                        <option value="">Pilih Hubungan</option>
-                        <option value="Ayah">Ayah</option>
-                        <option value="Ibu">Ibu</option>
-                        <option value="Pasangan" selected>Pasangan</option>
-                        <option value="Anak">Anak</option>
-                        <option value="Saudara">Saudara</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Nama <span class="required-star">*</span></label>
-                    <input type="text" name="family_members[2][name]" class="form-input" placeholder="Nama lengkap pasangan (kosongkan jika belum menikah)" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Usia <span class="required-star">*</span></label>
-                    <input type="number" name="family_members[2][age]" class="form-input" min="0" max="120" placeholder="Contoh: 30" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Pendidikan <span class="required-star">*</span></label>
-                    <input type="text" name="family_members[2][education]" class="form-input" placeholder="Contoh: SMA, S1, dll" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Pekerjaan <span class="required-star">*</span></label>
-                    <input type="text" name="family_members[2][occupation]" class="form-input" placeholder="Contoh: Karyawan swasta, Wiraswasta, dll" required>
-                </div>
-                <div class="form-group flex items-end">
-                    <button type="button" class="btn-remove" onclick="removeFamilyMember(this)">Hapus</button>
-                </div>
-            </div>
-        </div>
+                    <!-- Pasangan - Index 2 -->
+                    <div class="dynamic-group" data-index="2">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="form-group">
+                                <label class="form-label">Hubungan Keluarga <span class="required-star">*</span></label>
+                                <select name="family_members[2][relationship]" class="form-input" required>
+                                    <option value="">Pilih Hubungan</option>
+                                    <option value="Ayah">Ayah</option>
+                                    <option value="Ibu">Ibu</option>
+                                    <option value="Pasangan" selected>Pasangan</option>
+                                    <option value="Anak">Anak</option>
+                                    <option value="Saudara">Saudara</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nama <span class="required-star">*</span></label>
+                                <input type="text" name="family_members[2][name]" class="form-input" placeholder="Nama lengkap pasangan (kosongkan jika belum menikah)" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Usia <span class="required-star">*</span></label>
+                                <input type="number" name="family_members[2][age]" class="form-input" min="0" max="120" placeholder="Contoh: 30" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Pendidikan <span class="required-star">*</span></label>
+                                <input type="text" name="family_members[2][education]" class="form-input" placeholder="Contoh: SMA, S1, dll" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Pekerjaan <span class="required-star">*</span></label>
+                                <input type="text" name="family_members[2][occupation]" class="form-input" placeholder="Contoh: Karyawan swasta, Wiraswasta, dll" required>
+                            </div>
+                            <div class="form-group flex items-end">
+                                <button type="button" class="btn-remove" onclick="removeFamilyMember(this)">Hapus</button>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Anak - Index 3 -->
                     <div class="dynamic-group" data-index="3">
@@ -359,9 +458,9 @@
                     </div>
                 </div>
                 
-                <!-- UBAH text button menjadi: -->
                 <button type="button" class="btn-add" onclick="addFamilyMember()">+ Tambah Anggota Keluarga Lainnya</button>
             </div>
+
             <!-- 4. Pendidikan -->
             <div class="form-section" data-section="4">
                 <h2 class="section-title">Latar Belakang Pendidikan</h2>
@@ -469,7 +568,7 @@
                                     <label class="form-label">Bahasa <span class="required-star">*</span></label>
                                     <select name="language_skills[0][language]" class="form-input" required>
                                         <option value="">Pilih Bahasa</option>
-                                        <option value="Bahasa Inggris">Bahasa Indonesia</option>
+                                        <option value="Bahasa Indonesia">Bahasa Indonesia</option>
                                         <option value="Bahasa Inggris">Bahasa Inggris</option>
                                         <option value="Bahasa Mandarin">Bahasa Mandarin</option>
                                         <option value="Lainnya">Lainnya</option>
@@ -665,73 +764,69 @@
                 </div>
             </div>
 
-            <!-- 9. Upload Dokumen & Pernyataan -->
+            <!-- 9. Upload Dokumen & Pernyataan - Mobile Optimized -->
             <div class="form-section" data-section="9">
                 <h2 class="section-title">Upload Dokumen & Pernyataan</h2>
-                <p class="text-sm text-gray-600 mb-4">Format yang diterima: PDF, JPG, PNG (Maksimal 2MB per file)</p>
+                <p class="text-sm text-gray-600 mb-4">Format yang diterima: PDF untuk dokumen, JPG/PNG untuk foto (Maksimal 2MB per file)</p>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- CV Upload -->
+                    <!-- CV Upload - Mobile Optimized -->
                     <div class="form-group">
                         <label class="form-label" for="cv">CV/Resume <span class="required-star">*</span></label>
-                        <div class="file-upload-wrapper">
-                            <input type="file" name="cv" id="cv" class="file-upload-input" accept=".pdf" required>
-                            <label for="cv" class="file-upload-label" id="cv-label">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                                </svg>
-                                <span>Pilih file PDF</span>
-                            </label>
-                            <div class="validation-message" id="cv-error"></div>
-                            <div class="file-preview" id="cv-preview" style="display: none;"></div>
+                        <div class="mobile-file-upload">
+                            <input type="file" 
+                                   name="cv" 
+                                   id="cv" 
+                                   class="mobile-file-input" 
+                                   accept=".pdf,application/pdf" 
+                                   required>
+                            <div class="file-info" id="cv-info"></div>
+                            <div class="file-error" id="cv-error"></div>
                         </div>
                     </div>
                     
-                    <!-- Photo Upload -->
+                    <!-- Photo Upload - Mobile Optimized -->
                     <div class="form-group">
                         <label class="form-label" for="photo">Foto <span class="required-star">*</span></label>
-                        <div class="file-upload-wrapper">
-                            <input type="file" name="photo" id="photo" class="file-upload-input" accept=".jpg,.jpeg,.png" required>
-                            <label for="photo" class="file-upload-label" id="photo-label">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                </svg>
-                                <span>Pilih file JPG/PNG</span>
-                            </label>
-                            <div class="validation-message" id="photo-error"></div>
-                            <div class="file-preview" id="photo-preview" style="display: none;"></div>
+                        <div class="mobile-file-upload">
+                            <input type="file" 
+                                   name="photo" 
+                                   id="photo" 
+                                   class="mobile-file-input" 
+                                   accept=".jpg,.jpeg,.png,image/jpeg,image/jpg,image/png" 
+                                   required>
+                            <div class="file-info" id="photo-info"></div>
+                            <div class="file-error" id="photo-error"></div>
                         </div>
                     </div>
                     
-                    <!-- Transcript Upload -->
+                    <!-- Transcript Upload - Mobile Optimized -->
                     <div class="form-group">
                         <label class="form-label" for="transcript">Transkrip Nilai <span class="required-star">*</span></label>
-                        <div class="file-upload-wrapper">
-                            <input type="file" name="transcript" id="transcript" class="file-upload-input" accept=".pdf" required>
-                            <label for="transcript" class="file-upload-label" id="transcript-label">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                </svg>
-                                <span>Pilih file PDF</span>
-                            </label>
-                            <div class="validation-message" id="transcript-error"></div>
-                            <div class="file-preview" id="transcript-preview" style="display: none;"></div>
+                        <div class="mobile-file-upload">
+                            <input type="file" 
+                                   name="transcript" 
+                                   id="transcript" 
+                                   class="mobile-file-input" 
+                                   accept=".pdf,application/pdf" 
+                                   required>
+                            <div class="file-info" id="transcript-info"></div>
+                            <div class="file-error" id="transcript-error"></div>
                         </div>
                     </div>
                     
-                    <!-- Certificates Upload (Multiple) -->
+                    <!-- Certificates Upload (Multiple) - Mobile Optimized -->
                     <div class="form-group">
                         <label class="form-label" for="certificates">Sertifikat (opsional - bisa lebih dari satu)</label>
-                        <div class="file-upload-wrapper">
-                            <input type="file" name="certificates[]" id="certificates" class="file-upload-input" accept=".pdf" multiple>
-                            <label for="certificates" class="file-upload-label" id="certificates-label">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                                </svg>
-                                <span>Pilih file PDF (dapat lebih dari 1)</span>
-                            </label>
-                            <div class="validation-message" id="certificates-error"></div>
-                            <div class="file-preview" id="certificates-preview" style="display: none;"></div>
+                        <div class="mobile-file-upload">
+                            <input type="file" 
+                                   name="certificates[]" 
+                                   id="certificates" 
+                                   class="mobile-file-input" 
+                                   accept=".pdf,application/pdf" 
+                                   multiple>
+                            <div class="file-info" id="certificates-info"></div>
+                            <div class="file-error" id="certificates-error"></div>
                         </div>
                     </div>
                 </div>
@@ -754,7 +849,7 @@
                 </div>
             </div>
 
-            <!-- Submit Button -->
+            <!-- Submit Button - Mobile Optimized -->
             <div class="text-center mt-8">
                 <button type="submit" class="btn-primary px-8 py-3 text-lg" id="submitBtn">
                     Kirim Lamaran
@@ -774,7 +869,7 @@
         <span>Data tersimpan otomatis</span>
     </div>
 
-    <!-- Include External JavaScript menggunakan CDN yang sama dengan index.html -->
+    <!-- Include External JavaScript -->
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <script>
         // Pass Laravel session data to JavaScript
@@ -782,7 +877,7 @@
             var formSubmitted = true;
         @endif
         
-        // Test Tesseract availability seperti index.html
+        // Test Tesseract availability
         window.addEventListener('load', function() {
             console.log('✅ Tesseract loaded:', typeof Tesseract !== 'undefined');
             if (typeof Tesseract !== 'undefined') {
@@ -793,6 +888,5 @@
         });
     </script>
     <script src="{{ asset('js/form-style.js') }}"></script>
-    <!-- <script src="{{ asset('js/ktp-ocr.js') }}"></script> -->
 </body>
 </html>
